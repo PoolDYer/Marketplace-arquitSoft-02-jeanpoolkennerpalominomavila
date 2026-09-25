@@ -2,7 +2,7 @@
 
 ## Diagrama de arquitectura
 
-![alt text](image.png)
+analisis-de-sistema/diagrama de arquitectura.png
 
 ## Descripción
 La arquitectura inicial se organiza en tres capas principales:
