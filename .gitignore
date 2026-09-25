@@ -1,8 +1,3 @@
-# Archivos del sistema operativo
 .DS_Store
 Thumbs.db
-
-# Entornos y secretos locales
-.env
-.env.*
-!.env.example
+.vscode/
