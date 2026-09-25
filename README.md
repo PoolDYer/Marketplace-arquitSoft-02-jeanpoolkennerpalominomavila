@@ -1,8 +1,12 @@
-# Marketplace-arquitSoft-02
+# Marketplace de productos para mascotas
 
-Documentación de análisis de sistema y arquitectura inicial del marketplace.
+## nombre
+Jean Pool Kenner Palomino Mavila    
+## Descripción
+Marketplace académico de productos para mascotas.
 
-## Estructura
+## Caso de estudio
+GoPet como referencia funcional.
 
-- `analisis-de-sistema/`: análisis, requisitos y drivers arquitectónicos.
-- `arquitectura/`: documentación de la arquitectura del sistema.
+## Curso
+Arquitectura de Software
