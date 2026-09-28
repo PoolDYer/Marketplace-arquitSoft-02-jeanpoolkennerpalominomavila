@@ -14,41 +14,204 @@ El enfoque de **Clean Architecture (Arquitectura Limpia)** se aplica para gobern
 
 ## 3. Diagrama de Enfoque y Dependencias
 
+## Diagrama de arquitectura
+
 ```mermaid
-graph TD
-    subgraph CapaInfraestructura ["1. Capa de Infraestructura (Externa)"]
-        Frameworks["Express / Angular / PostgreSQL / Stripe API / Olva API"]
+flowchart LR
+
+    %% ==========================================
+    %% USUARIO
+    %% ==========================================
+
+    Usuario["👤 Usuario<br/>(Cliente)"]
+
+    %% ==========================================
+    %% MARKETPLACE WEB
+    %% ==========================================
+
+    subgraph Marketplace["«aplicación» Marketplace Web<br/>Angular 18 · TypeScript"]
+
+        %% ======================================
+        %% PRESENTACIÓN
+        %% ======================================
+
+        subgraph Presentacion["PRESENTACIÓN<br/>src/app/presentation/"]
+
+            Catalogo["«componente»<br/><b>CatalogoComponent</b><br/>lista y filtra productos"]
+
+            EstadoCarrito["«servicio de estado»<br/><b>EstadoCarrito</b><br/>signals · sin reglas"]
+
+            Carrito["«componente»<br/><b>CarritoComponent</b><br/>resumen y confirmar compra"]
+
+            App["«componente»<br/><b>AppComponent</b><br/>shell de la aplicación"]
+
+        end
+
+        %% ======================================
+        %% APLICACIÓN
+        %% ======================================
+
+        subgraph Aplicacion["APLICACIÓN · Casos de uso<br/>src/app/application/"]
+
+            ConsultarCatalogo["«caso de uso»<br/><b>ConsultarCatalogoCasoUso</b><br/>ejecutar()"]
+
+            AgregarCarrito["«caso de uso»<br/><b>AgregarAlCarritoCasoUso</b><br/>ejecutar()"]
+
+            RegistrarCompra["«caso de uso»<br/><b>RegistrarCompraCasoUso</b><br/>ejecutar()"]
+
+        end
+
+        %% ======================================
+        %% DOMINIO
+        %% ======================================
+
+        subgraph Dominio["DOMINIO · Núcleo<br/>src/app/dominio/"]
+
+            subgraph Modelos["Modelos · Entidades y reglas"]
+
+                Producto["«entidad»<br/><b>Producto</b><br/>stock · categoría · precio"]
+
+                CarritoEntidad["«entidad»<br/><b>Carrito</b><br/>inmutable · subtotal · total"]
+
+                Pedido["«entidad»<br/><b>Pedido</b><br/>estados · total"]
+
+                Precios["«reglas»<br/><b>precios.ts</b><br/>comisión 10% · IGV 18%"]
+
+            end
+
+            subgraph Contratos["Contratos · Puertos"]
+
+                RepositorioProductos["«interfaz»<br/><b>RepositorioProductos</b>"]
+
+                RepositorioPedidos["«interfaz»<br/><b>RepositorioPedidos</b>"]
+
+                ProcesadorPagos["«interfaz»<br/><b>ProcesadorPagos</b>"]
+
+                NotificadorCliente["«interfaz»<br/><b>NotificadorCliente</b>"]
+
+            end
+
+        end
+
+        %% ======================================
+        %% INFRAESTRUCTURA
+        %% ======================================
+
+        subgraph Infraestructura["INFRAESTRUCTURA<br/>src/app/infraestructura/"]
+
+            ProductosMemoria["«adaptador»<br/><b>RepositorioProductosMemoria</b>"]
+
+            ProductosHttp["«adaptador»<br/><b>RepositorioProductosHttp</b>"]
+
+            PedidosMemoria["«adaptador»<br/><b>RepositorioPedidosMemoria</b>"]
+
+            PagosSimulado["«adaptador»<br/><b>ProcesadorPagosSimulado</b>"]
+
+            NotificadorConsola["«adaptador»<br/><b>NotificadorConsola</b>"]
+
+            NotificadorWhatsApp["«adaptador»<br/><b>NotificadorWhatsApp</b>"]
+
+            Tokens["«Angular DI»<br/><b>tokens.ts</b><br/>InjectionToken por contrato"]
+
+        end
+
+        %% ======================================
+        %% RAÍZ DE COMPOSICIÓN
+        %% ======================================
+
+        Config["«raíz de composición»<br/><b>app.config.ts</b><br/>useFactory + InjectionToken"]
+
     end
 
-    subgraph CapaAdaptadores ["2. Capa de Adaptadores de Interfaz"]
-        Controllers["Controllers / Presenters"]
-        Gateways["PaymentGatewayAdapter / ShippingAdapter"]
-        Repos["PostgreSQLRepositoryImpl"]
-    end
+    %% ==========================================
+    %% API REST EXTERNA
+    %% ==========================================
 
-    subgraph CapaAplicacion ["3. Capa de Casos de Uso (Application)"]
-        UseCases["CrearPedido() / ConfirmarCompra() / CancelarPedido()"]
-        Ports["Puertos e Interfaces (RepositoryPort, PaymentPort)"]
-    end
+    API["«sistema externo»<br/><b>Marketplace API REST</b><br/><br/>
+    Backend Node.js · monolito modular<br/><br/>
+    /api/productos<br/>
+    /api/pedidos<br/>
+    /api/autorizacion<br/>
+    /api/refreshtokens<br/><br/>
+    Integración con WhatsApp"]
 
-    subgraph CapaDominio ["4. Capa de Dominio (Domain Core)"]
-        Entities["Entidades: Producto, Pedido, Cliente"]
-        Rules["Reglas de Negocio y Validaciones"]
-    end
+    %% ==========================================
+    %% NAVEGACIÓN
+    %% ==========================================
 
-    Frameworks --> CapaAdaptadores
-    CapaAdaptadores --> CapaAplicacion
-    CapaAplicacion --> CapaDominio
+    Usuario -->|navegador| App
 
-    classDef core fill:#ffcccc,stroke:#cc0000,stroke-width:2px;
-    classDef app fill:#fff2cc,stroke:#d6b656,stroke-width:2px;
-    classDef adapt fill:#d5e8d4,stroke:#82b366,stroke-width:2px;
-    classDef infra fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px;
+    %% ==========================================
+    %% PRESENTACIÓN → APLICACIÓN
+    %% ==========================================
 
-    class CapaDominio core;
-    class CapaAplicacion app;
-    class CapaAdaptadores adapt;
-    class CapaInfraestructura infra;
+    Catalogo -->|invoca| ConsultarCatalogo
+    Carrito -->|invoca| AgregarCarrito
+    Carrito -->|invoca| RegistrarCompra
+
+    %% ==========================================
+    %% APLICACIÓN → DOMINIO
+    %% ==========================================
+
+    ConsultarCatalogo -.-> RepositorioProductos
+    AgregarCarrito -.-> RepositorioProductos
+
+    RegistrarCompra -.-> RepositorioPedidos
+    RegistrarCompra -.-> ProcesadorPagos
+    RegistrarCompra -.-> NotificadorCliente
+
+    %% ==========================================
+    %% INFRAESTRUCTURA → CONTRATOS
+    %% ==========================================
+
+    ProductosMemoria -.->|implementa| RepositorioProductos
+    ProductosHttp -.->|implementa| RepositorioProductos
+
+    PedidosMemoria -.->|implementa| RepositorioPedidos
+
+    PagosSimulado -.->|implementa| ProcesadorPagos
+
+    NotificadorConsola -.->|implementa| NotificadorCliente
+    NotificadorWhatsApp -.->|implementa| NotificadorCliente
+
+    %% ==========================================
+    %% INYECCIÓN DE DEPENDENCIAS
+    %% ==========================================
+
+    Config -.->|registra| Tokens
+
+    Tokens -.-> RepositorioProductos
+    Tokens -.-> RepositorioPedidos
+    Tokens -.-> ProcesadorPagos
+    Tokens -.-> NotificadorCliente
+
+    %% ==========================================
+    %% COMUNICACIÓN CON API
+    %% ==========================================
+
+    ProductosHttp -->|HTTP / JSON| API
+
+    PagosSimulado -->|HTTP / JSON| API
+
+    NotificadorWhatsApp -->|HTTP / JSON| API
+
+    %% ==========================================
+    %% ESTILOS
+    %% ==========================================
+
+    classDef presentacion fill:#dce9f7,stroke:#5b84b1,color:#111;
+    classDef aplicacion fill:#e5f1df,stroke:#78a765,color:#111;
+    classDef dominio fill:#fff1c9,stroke:#d6ad42,color:#111;
+    classDef infraestructura fill:#eadff2,stroke:#9b76b5,color:#111;
+    classDef externo fill:#eeeeee,stroke:#777,color:#111;
+    classDef composicion fill:#f5f5f5,stroke:#777,color:#111;
+
+    class Catalogo,EstadoCarrito,Carrito,App presentacion;
+    class ConsultarCatalogo,AgregarCarrito,RegistrarCompra aplicacion;
+    class Producto,CarritoEntidad,Pedido,Precios,RepositorioProductos,RepositorioPedidos,ProcesadorPagos,NotificadorCliente dominio;
+    class ProductosMemoria,ProductosHttp,PedidosMemoria,PagosSimulado,NotificadorConsola,NotificadorWhatsApp,Tokens infraestructura;
+    class Usuario,API externo;
+    class Config composicion;
 ```
 
 ## 4. Reglas de Dependencia del Código
